@@ -1,0 +1,102 @@
+<extend name="Base/common" />
+<block name="body">
+    <div class="span9 page_message">
+        <section id="contents">
+            <include file="Addons/_nav"/>
+            <!-- 数据列表 -->
+            <div class="data-table" style="margin-top:20px;">
+                <div class="table-striped">
+                    <php>if(C('MATERIAL')) {</php>
+                    <div style="padding-bottom: 20px;">
+                        <a class="btn" href="{:U('syc_image_to_wechat')}">一键上传图片到微信图片库</a>&nbsp;&nbsp;
+                        <a class="btn" href="{:U('syc_image_from_wechat')}">一键下载微信图片库到本地</a>&nbsp;&nbsp;
+                        <a class="btn" href="javascript:void(0);" onclick="delAll(this)">一键清空微信图片库</a>
+                    </div>
+                    <php>}</php>
+
+                    <ul class="picture_list">
+                        <li>
+                            <div class="controls uploadrow2" title="点击修改图片" rel="p_cover" style="width:224px">
+                                <input type="file" id="upload_picture_p_cover">
+                                <input type="hidden" name="p_cover" id="cover_id_p_cover" data-callback="uploadImgCallback" value=""/>
+                                <div class="upload-img-box" rel="img" style="display:none">
+                                    <div class="upload-pre-item2"><img width="100" height="100" src=""/></div>
+                                    <em class="edit_img_icon">&nbsp;</em>
+                                </div>
+                            </div>
+                        </li>
+                        <volist name="list_data" id="vo">
+                            <li>
+                            <eq name="vo.media_id" value="0">
+                            <else/>
+                                <div style="position: absolute; z-index: 100;/* margin: 3px;*/">
+                                    <img src="__IMG__/syc.png" width="22px" height="22px" title="已同步" />
+                                </div>
+                            </eq>
+                                <div class="picture_item">
+                                    <div class="main_img">
+                                        <a href="{$vo['cover_url']}" target="_blank"><img src="{$vo['cover_url']}"/></a>
+                                    </div>
+                                    <div class="picture_action">
+                                        <a href="javascript:void(0);" data-clipboard-text="{$vo['cover_url']}" id="picture_{$vo['id']}">复制链接</a>
+                                        <a href="javascript:void(0);" onclick="del('{$vo.id}', this);">删除</a>
+                                    </div>
+                                    <script type="application/javascript">
+                                        $.WeiPHP.initCopyBtn('picture_{$vo.id}');
+                                    </script>
+                                </div>
+
+                            </li>
+                        </volist>
+                    </ul>
+                </div>
+            </div>
+            <div class="page"> {$_page|default=''}</div>
+        </section>
+    </div>
+</block>
+<block name="script">
+    <script type="text/javascript">
+        $(function () {
+            // 上传图片
+            initUploadImg({width: 224, height: 192});
+//            $('.uploadify-button').css('background-color', '#ddd')
+        });
+
+        function uploadImgCallback(name, id, src) {
+            $('.upload-img-box').hide();
+            $.post("{:U('add_picture')}", {cover_id: id, src: src}, function (data) {
+                if (data.status == 1) {
+                    var imgHtml = $(
+                            '<li>' +
+                                '<div class="picture_item">' +
+                                    '<div class="main_img">' +
+                                        '<a href="' + src + '" target="_blank"><img src="' + src + '"/></a>' +
+                                    '</div>' +
+                                    '<div class="picture_action">' +
+                                        '<a href="javascript:;" data-clipboard-text="' + src + '" id="picture_' + id + '">复制链接</a>' +
+                                        '<a href="#" class="ajax-post" data-url="">删除</a>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</li>');
+                    imgHtml.insertAfter($('.picture_list li').eq(0));
+                    $.WeiPHP.initCopyBtn('picture_' + id);
+                } else {
+                    updateAlert(data.info);
+                }
+            });
+        }
+
+        function del(id, _this) {
+            if (!confirm('确认删除？')) return false;
+
+            $(_this).parent().parent().parent().remove();
+            $.post("{:U('del_picture')}", {id: id});
+        }
+
+        function delAll(_this) {
+            if (!confirm('确认清空微信图片素材，本地同步的素材同时被删除？')) return false;
+            _this.href = "{:U('clear_image_from_wechat')}";
+        }
+    </script>
+</block>

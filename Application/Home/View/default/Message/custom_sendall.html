@@ -1,0 +1,358 @@
+<extend name="Base/common"/>
+<block name="body">
+    <style>
+        .sel_bg {
+            padding: 10px;
+            text-align: left;
+            color: #333;
+            background-color: #eaeaea;
+        }
+        .sel_text {
+            position: absolute;
+            bottom: 20px;
+            left: 10px;
+            cursor: pointer;
+            color: #888;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            padding: 5px 20px;
+            background-color: #eee;
+        }
+    </style>
+    <div class="span9 page_message">
+        <section id="contents">
+            <include file="Addons/_nav"/>
+            <div class="tab-content">
+                <div class="message_list" style="padding:10px; text-align: left;color: #333;background-color: #eaeaea;">
+                    <div class="msg_tab">
+                        <a class="txt current" href="javascript:void(0);">文本消息</a>
+                        <a class="image" href="javascript:void(0);">图片消息</a>
+                        <a class="appmsg" href="javascript:void(0);">图文消息</a>
+                        <a class="voice" href="javascript:void(0);">语音消息</a>
+                        <a class="video" href="javascript:void(0);">视频消息</a>
+                    </div>
+                    <php> $post_url || $post_url = U('custom_sendall?model='.$model['id'], $get_param);</php>
+                    <form id="form" action="{$post_url}" method="post" class="form-horizontal form-center">
+                        <input type="hidden" name="msg_type" value="text"/>
+                        <label class="textarea" style="position:relative; overflow:hidden; zoom:1;">
+                            <!-- 文本 -->
+                            <a id="getText" class="txt_icon current sel_text" onClick="selectText();">选择文本素材</a>
+                            <textarea name="content" placeholder="请输入要发送的文本" id='message_text'></textarea>
+
+                            <!-- 图片 -->
+                            <div id="image_area" style="display:none" class="appmsg_area">
+                                <input type="hidden" name="image_material" value="0"/>
+                                <div class="sel_from_weixin_div">
+                                    <a href="javascript:;" class="sel"
+                                       onclick="$.WeiPHP.openSelectAppMsg('{:U(\'/Home/Material/picture_data\')}',selectImageCallback,'选择图片素材')">
+                                        + 从图片素材库选择
+                                    </a>
+                                </div>
+                                <div class="image_wrap"></div>
+                                <a class="delete" href="javascript:void(0);" style="display: none;">删除</a>
+                            </div>
+
+                            <!-- 图文 -->
+                            <div id="appmsg_area" style="display:none" class="appmsg_area">
+                                <input type="hidden" name="appmsg_id" value="0"/>
+                                <div class="sel_from_weixin_div">
+                                    <a href="javascript:;" class="sel"
+                                       onclick="$.WeiPHP.openSelectAppMsg('{:U(\'/Home/Material/material_data\')}',selectAppMsgCallback,'选择图文素材')">
+                                        + 从图文素材库选择
+                                    </a>
+                                </div>
+                                <div class="appmsg_wrap"></div>
+                                <a class="delete" href="javascript:void(0);" style="display: none;">删除</a>
+                            </div>
+
+                            <!-- 语音 -->
+                            <div id="voice_area" style="display:none" class="appmsg_area">
+                                <input type="hidden" name="voice_id" value="0"/>
+                                <div class="sel_from_weixin_div">
+                                    <a href="javascript:;" class="sel"
+                                       onclick="$.WeiPHP.openSelectAppMsg('{:U(\'/Home/Material/voice_data\')}',selectVoiceCallback,'选择语音素材')">
+                                        + 从语音素材库选择
+                                    </a>
+                                </div>
+                                <div class="voice_wrap"></div>
+                                <a class="delete" href="javascript:void(0);" style="display: none;">删除</a>
+                            </div>
+
+                            <!-- 视频 -->
+                            <div id="video_area" style="display:none" class="appmsg_area">
+                                <input type="hidden" name="video_id" value="0"/>
+                                <div class="sel_from_weixin_div">
+                                    <a href="javascript:;" class="sel"
+                                       onclick="$.WeiPHP.openSelectAppMsg('{:U(\'/Home/Material/video_data\')}',selectVideoCallback,'选择视频素材')">
+                                        + 从视频素材库选择
+                                    </a>
+                                </div>
+                                <div class="video_wrap"></div>
+                                <a class="delete" href="javascript:void(0);" style="display:none;">删除</a>
+                            </div>
+                        </label>
+
+                        <div class="form-item cf toggle-send_type">
+                            <label class="item-label"> 发送方式： <span class="check-tips"> </span></label>
+                            <div class="controls">
+                                <select name="send_type">
+                                    <option selected="" toggle-data="group_id@show,send_openids@hide" class="toggle-data" value="0">
+                                        按用户组发送
+                                    </option>
+                                    <option toggle-data="group_id@hide,send_openids@show" class="toggle-data" value="1">
+                                        指定OpenID发送
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-item cf toggle-group_id">
+                            <label class="item-label"> 群发对象： <span class="check-tips"> （全部用户或者某分组用户） </span></label>
+                            <div class="controls">
+                                <div id="dynamic_select_group_id"></div>
+                                <select name="group_id">
+                                    <option toggle-data="全部用户" class="toggle-data" value="0">全部用户</option>
+                                    <volist name="group_list" id="vo">
+                                        <option toggle-data="" class="toggle-data" value="{$vo.id}">{$vo.title}</option>
+                                    </volist>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-item cf toggle-send_openids" style="display: none;">
+                            <div class="item-label">
+                                指定的用户：<span class="check-tips"> （<a href="javascript:void(0);" onClick="selectUser('send_openids')">选择指定的用户</a>） </span>
+                            </div>
+                            <div id="send_openids" class="controls colorless"></div>
+                            <br/>
+                            <div style="display:none">
+                                <label class="item-label"> 要发送的OpenID <span class="check-tips"> （多个可用逗号或者换行分开，OpenID值可在微信用户的列表中找到） </span></label>
+                                <div class="controls">
+                                    <label class="textarea input-large">
+                                        <textarea name="send_openids"></textarea>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-item cf toggle-preview_openids">
+                            <div class="item-label">
+                                预览人：<span class="check-tips"> （<a href="javascript:void(0);" onClick="selectUser('preview_openids')">选择预览人</a>） </span>
+                            </div>
+                            <div id="preview_openids" class="controls colorless"></div>
+                            <br/>
+                            <div style="display:none">
+                                <label class="item-label"> 预览人OPENID <span class="check-tips"> （选填，多个可用逗号或者换行分开，OpenID值可在微信用户的列表中找到） </span></label>
+                                <div class="controls">
+                                    <label class="textarea input-large">
+                                        <textarea name="preview_openids" style="height:50px; min-height:50px;"></textarea>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn submit-btn ajax-post" id="submit" type="submit" target-form="form-horizontal">回 复</button>&nbsp;&nbsp;
+                        <button onclick="preview()" class="btn preview-btn ajax-post">预 览</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</block>
+<block name="script">
+    <link href="__CSS__/message_area.css?v={:SITE_VERSION}" rel="stylesheet">
+    <link href="__STATIC__/datetimepicker/css/datetimepicker.css?v={:SITE_VERSION}" rel="stylesheet" type="text/css">
+    <php>if(C('COLOR_STYLE')=='blue_color') echo '<link href="__STATIC__/datetimepicker/css/datetimepicker_blue.css?v={:SITE_VERSION}" rel="stylesheet" type="text/css">';</php>
+    <link href="__STATIC__/datetimepicker/css/dropdown.css?v={:SITE_VERSION}" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="__STATIC__/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+    <script type="text/javascript" src="__STATIC__/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js?v={:SITE_VERSION}" charset="UTF-8"></script>
+    <script type="text/javascript">
+        $('#submit').click(function () {
+            $('#form').submit();
+        });
+
+        function preview() {
+            var query = $('#form').serialize();
+            $.post("{:U('preview')}", query, function (data) {
+                if (data.status == 1) {
+                    if (data.url) {
+                        updateAlert(data.info + ' 页面即将自动跳转~', 'alert-success');
+                    } else {
+                        updateAlert(data.info, 'alert-success');
+                    }
+                    setTimeout(function () {
+                        if (data.url) {
+                            location.href = data.url;
+                        } else {
+                            location.reload();
+                        }
+                    }, 1500);
+                } else {
+                    updateAlert(data.info);
+                    setTimeout(function () {
+                        if (data.url) {
+                            location.href = data.url;
+                        } else {
+                            $('#top-alert').find('button').click();
+                        }
+                    }, 1500);
+                }
+            })
+        }
+
+        $(function () {
+            showTab();
+
+            $('.toggle-data').each(function () {
+                var data = $(this).attr('toggle-data');
+                if (data == '') return true;
+
+                if ($(this).is(":selected") || $(this).is(":checked")) {
+                    change_event(this)
+                }
+            });
+
+            $('select').change(function () {
+                $('.toggle-data').each(function () {
+                    var data = $(this).attr('toggle-data');
+                    if (data == '') return true;
+
+                    if ($(this).is(":selected") || $(this).is(":checked")) {
+                        change_event(this)
+                    }
+                });
+            });
+        });
+
+        $('.msg_tab .txt').click(function () {
+            //纯文本
+            $(this).addClass('current').siblings().removeClass('current');
+            $('input[name="msg_type"]').val('text');
+            $('textarea[name="content"]').show().siblings().hide();
+            $('#getText').show();
+        })
+
+        $('.msg_tab .image').click(function () {
+            //图片消息
+            $(this).addClass('current').siblings().removeClass('current');
+            $('input[name="msg_type"]').val('image');
+            $('#image_area').show().siblings().hide();
+            $('#getText').hide();
+        })
+
+        $('.msg_tab .appmsg').click(function () {
+            //图文消息
+            $(this).addClass('current').siblings().removeClass('current');
+            $('input[name="msg_type"]').val('appmsg');
+            $('#appmsg_area').show().siblings().hide();
+            $('#getText').hide();
+        })
+
+        $('.msg_tab .voice').click(function () {
+            //图片消息
+            $(this).addClass('current').siblings().removeClass('current');
+            $('input[name="msg_type"]').val('voice');
+            $('#voice_area').show().siblings().hide();
+            $('#getText').hide();
+        })
+
+        $('.msg_tab .video').click(function () {
+            //图片消息
+            $(this).addClass('current').siblings().removeClass('current');
+            $('input[name="msg_type"]').val('video');
+            $('#video_area').show().siblings().hide();
+            $('#getText').hide();
+        })
+
+        $('#appmsg_area .delete').click(function () {
+            $('#appmsg_area .appmsg_wrap').html('').hide();
+            $('#appmsg_area .delete').hide();
+            $('#appmsg_area .sel_from_weixin_div').show();
+            $('input[name="appmsg_id"]').val(0);
+        })
+
+        $('#image_area .delete').click(function () {
+            $('#image_area .image_wrap').html('').hide();
+            $('#image_area .delete').hide();
+            $('#image_area .sel_from_weixin_div').show();
+            $('input[name="image_material"]').val(0);
+        })
+
+        $('#voice_area .delete').click(function () {
+            $('#voice_area .voice_wrap').html('').hide();
+            $('#voice_area .delete').hide();
+            $('#voice_area .sel_from_weixin_div').show();
+            $('input[name="voice_id"]').val(0);
+        })
+
+        $('#video_area .delete').click(function () {
+            $('#video_area .video_wrap').html('').hide();
+            $('#video_area .delete').hide();
+            $('#video_area .sel_from_weixin_div').show();
+            $('input[name="video_id"]').val(0);
+        })
+
+        function selectAppMsgCallback(_this) {
+            $('.appmsg_wrap').html($(_this).html()).show();
+            $('#appmsg_area .delete').show();
+            $('#appmsg_area .sel_from_weixin_div').hide();
+            $('input[name="appmsg_id"]').val($(_this).data('group_id'));
+            $.Dialog.close();
+        }
+
+        function selectImageCallback(_this) {
+            $('.image_wrap').html($(_this).html()).show();
+            $('#image_area .delete').show();
+            $('#image_area .sel_from_weixin_div').hide();
+            $('input[name="image_material"]').val($(_this).data('id'));
+            $.Dialog.close();
+        }
+
+        function selectVoiceCallback(_this) {
+            $(_this).find('.icon_sound').attr('src', IMG_PATH + '/icon_sound.png');
+            $('.voice_wrap').html($(_this).html()).show();
+            $('#voice_area .delete').show();
+            $('#voice_area .sel_from_weixin_div').hide();
+            $('input[name="voice_id"]').val($(_this).data('id'));
+            $.Dialog.close();
+        }
+
+        function selectVideoCallback(_this) {
+            $('.video_wrap').html($(_this).html()).show();
+            $('#video_area .delete').show();
+            $('#video_area .sel_from_weixin_div').hide();
+            $('input[name="video_id"]').val($(_this).data('id'));
+            $.Dialog.close();
+        }
+
+        function selectText() {
+            $.WeiPHP.openSelectLists("{:U('Material/text_lists')}", 1, '选择素材', function (data) {
+                if (data && data.length > 0) {
+                    for (var i = 0; i < data.length; i++) {
+                        var id = data[i]['id'];
+                        if (id) {
+                            $.post("{:U('Material/get_content_by_id')}", {'id': id}, function (d) {
+                                $('#message_text').text(d);
+                            })
+                        }
+                    }
+                }
+            })
+        }
+
+        function selectUser(name) {
+            $.WeiPHP.openSelectUsers("{:U('Home/UserCenter/lists')}", 0, function (data) {
+                if (data && data.length > 0) {
+                    var idsArr = new Array();
+                    var nameArr = new Array();
+                    for (var i = 0; i < data.length; i++) {
+                        idsArr.push(data[i].openid);
+                        nameArr.push(data[i].nickname);
+                    }
+                    $('textarea[name="' + name + '"]').val(idsArr.toString());
+                    $('#' + name).text(nameArr.toString());
+                }
+            })
+        }
+    </script>
+</block>
